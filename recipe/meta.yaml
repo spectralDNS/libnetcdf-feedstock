@@ -1,26 +1,19 @@
-{% set version = "4.6.2" %}
+{% set version = "4.6.1" %}
 
 package:
-  name: libnetcdf
+  name: libnetcdf-parallel
   version: {{ version }}
 
 source:
   url: https://github.com/Unidata/netcdf-c/archive/v{{ version }}.tar.gz
-  sha256: 673936c76ae0c496f6dde7e077f5be480afc1e300adb2c200bf56fbe22e5a82a
-  patches:
-    - 0002-run_get_hdf4_files.sh-Use-curl-if-wget-fails-macOS-d.patch
-    - 0003-Add-find_package-Threads-REQUIRED-to-CMakeLists.txt.patch
-    - 0004-Prefer-getenv-TOPSRCDIR-over-STRINGIFY-TOPSRCDIR.patch
-    - 0006-Fix-tests-for-Windows-VS2008-define-__func__-as-__FU.patch
-    - 0008-Finish-the-missing-code-to-handle-VS-in-test_common..patch
-    - prevent_MS_runtime_libs_being_installed_again.patch  # [win]
+  sha256: a2fabf27c72a5ee746e3843e1debbaad37cd035767eaede2045371322211eebb
 
 build:
-  number: 1001
+  number: 11
   skip: True  # [win and vc<14]
   run_exports:
     #   https://abi-laboratory.pro/tracker/timeline/netcdf/
-    - {{ pin_subpackage('libnetcdf') }}
+    - {{ pin_subpackage('libnetcdf-parallel') }}
 
 requirements:
   build:
@@ -29,22 +22,21 @@ requirements:
     - pkg-config  # [not win]
     - {{ compiler('c') }}
   host:
-    - msinttypes  # [win and vc<14]
     - bzip2
     - curl
     - zlib
+    - {{ mpi }}
     - hdf4
-    - hdf5
+    - hdf5 1.10.4 mpi_{{ mpi }}_*
     - jpeg
   run:
     - bzip2
     - curl
     - zlib
+    - {{ mpi }}
     - hdf4
     - hdf5
     - jpeg
-    # Curl should be pulling this... Investigate it later.
-    - libssh2  # [win]
 
 test:
   commands:

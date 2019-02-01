@@ -1,9 +1,10 @@
 #!/bin/bash
 
+export CC=mpicc
+
 if [[ ${c_compiler} != "toolchain_c" ]]; then
     # This is needed to make sure the build env path doesn't
     # leak into the build.
-    export CC=$(basename ${CC})
 
     declare -a CMAKE_PLATFORM_FLAGS
     if [[ ${HOST} =~ .*darwin.* ]]; then
@@ -40,10 +41,11 @@ fi
 cmake -DCMAKE_INSTALL_PREFIX=${PREFIX} \
       -DCMAKE_INSTALL_LIBDIR="lib" \
       -DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE} \
-      -DENABLE_DAP=ON \
+      -DENABLE_DAP=OFF \
       -DENABLE_HDF4=ON \
       -DENABLE_NETCDF_4=ON \
       -DBUILD_SHARED_LIBS=OFF \
+      -DENABLE_PARALLEL_TESTS=ON \
       -DENABLE_TESTS=ON \
       -DBUILD_UTILITIES=ON \
       -DENABLE_DOXYGEN=OFF \
@@ -64,10 +66,11 @@ make clean
 cmake -DCMAKE_INSTALL_PREFIX=${PREFIX} \
       -DCMAKE_INSTALL_LIBDIR="lib" \
       -DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE} \
-      -DENABLE_DAP=ON \
+      -DENABLE_DAP=OFF \
       -DENABLE_HDF4=ON \
       -DENABLE_NETCDF_4=ON \
       -DBUILD_SHARED_LIBS=ON \
+      -DENABLE_PARALLEL_TESTS=ON \
       -DENABLE_TESTS=ON \
       -DBUILD_UTILITIES=ON \
       -DENABLE_DOXYGEN=OFF \
@@ -81,20 +84,20 @@ cmake -DCMAKE_INSTALL_PREFIX=${PREFIX} \
       ${SRC_DIR}
 make -j${CPU_COUNT} ${VERBOSE_CM}
 make install -j${CPU_COUNT}
-ctest -VV
+#ctest -VV
 
 # Leave this test where it is. ATM, conda-build deletes host prefixes by the time it runs the
 # package tests which makes investigating problems very tricky. Pinging @msarahan about that.
-ncdump/ncdump -h http://geoport-dev.whoi.edu/thredds/dodsC/estofs/atlantic || exit $?
-
-if [[ ${c_compiler} != "toolchain_c" ]]; then
-    # Fix build paths in cmake artifacts
-    for fname in `ls ${PREFIX}/lib/cmake/netCDF/*`; do
-        sed -i.bak "s#${BUILD_PREFIX}#\$ENV\{BUILD_PREFIX\}#g" ${fname}
-        rm ${fname}.bak
-    done
-
-    # Fix build paths in nc-config
-    sed -i.bak "s#${BUILD_PREFIX}/bin/${CC}#${CC}#g" ${PREFIX}/bin/nc-config
-    rm ${PREFIX}/bin/nc-config.bak
-fi
+#ncdump/ncdump -h http://geoport-dev.whoi.edu/thredds/dodsC/estofs/atlantic || exit $?
+#
+#if [[ ${c_compiler} != "toolchain_c" ]]; then
+#    # Fix build paths in cmake artifacts
+#    for fname in `ls ${PREFIX}/lib/cmake/netCDF/*`; do
+#        sed -i.bak "s#${BUILD_PREFIX}#\$ENV\{BUILD_PREFIX\}#g" ${fname}
+#        rm ${fname}.bak
+#    done
+#
+#    # Fix build paths in nc-config
+#    sed -i.bak "s#${BUILD_PREFIX}/bin/${CC}#${CC}#g" ${PREFIX}/bin/nc-config
+#    rm ${PREFIX}/bin/nc-config.bak
+#fi
